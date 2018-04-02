@@ -3,6 +3,7 @@
 seedlings <- read_csv("data-raw/seedling_list.csv")
 
 biomass <- read_csv("data-raw/biomass/biomass_weights.csv")
+pretransplant <- read_csv("data-raw/biomass/pretransplant_weights.csv")
 
 seed <- read_csv("data-raw/seed/seed_weight_count.csv")
 
@@ -23,55 +24,113 @@ samples <- full_join(seedlings, biomass) %>%
          species_code = fct_relevel(species_code, "ABAR", "BDIA", "ECUR")) %>%
   group_by(pot) %>%
   mutate(total_density = n()) %>%
+  ungroup() %>%
   select(-native_dens, -exotic_dens, -total_dens,
          -weight_notes, -seed_notes, -leaf_weight_notes)
 
-usethis::use_data(samples)
 
-# Pot weight
-total_weight <- group_by(samples, block, pot, fertility, total_density) %>%
-  summarise(total_weight = sum(biomass_weight_g, na.rm = T) + sum(seed_weight_g, na.rm = T))
+# Impute missing ABAR seed weight
+abar <- filter(samples, species_code == "ABAR") %>%
+  select(seedling_id, sample_id, biomass_weight_g,
+         seed_weight_g, seed_number, husk_number,
+         fertility, total_density, block, pot) %>%
+  mutate(single_seed = seed_weight_g / seed_number)
 
-pot_weight <- glmer(total_weight ~ 1 + (1|block) + (1|fertility) + (1|total_density),
-                      data = total_weight)
+# Choose 1:1 husk-seed ratio
+ggplot(abar, aes(x = seed_number, y = husk_number)) +
+  geom_point() +
+  geom_abline(aes(intercept = 0, slope = 1)) +
+  geom_abline(aes(intercept = 0, slope = 2), color = "red") +
+  labs(title= "Husk to seed ratio in ABAR",
+       subtitle = "black = 1:1, red = 2:1")
 
-summary(pot_weight)
-data.frame(summary(pot_weight)$varcor) %>%
-  mutate(proportion_variation= vcov / sum(vcov))
+# Regress avg. seed weight against biomass
+lm(single_seed ~ biomass_weight_g, data = abar)
+
+# Impute using individaul avg. weight and biomass regression methods
+imp <-  group_by(abar, pot) %>%
+  mutate(single_seed_pot =
+           ifelse(is.na(seed_weight_g),
+                  mean(single_seed, na.rm = T),
+                  single_seed)) %>%
+  ungroup() %>%
+  mutate(est_weight_pot = husk_number * single_seed_pot,
+         est_weight_reg = husk_number * (0.0078 + 0.0065 * biomass_weight_g))
+
+# Calculate RMSE
+mutate(imp, pot_err = est_weight_pot - seed_weight_g,
+            reg_err = est_weight_reg - seed_weight_g) %>%
+  summarise(pot_rmse = sqrt(mean(pot_err ^ 2, na.rm = T)),
+            reg_rmse = sqrt(mean(reg_err ^ 2, na.rm = T)))
+
+# Plot methods
+gather(imp, method, value, est_weight_pot:est_weight_reg) %>%
+  ggplot(., aes(seed_weight_g, value)) +
+  geom_point() +
+  geom_abline(aes(intercept = 0, slope = 1)) +
+  facet_grid(~method) +
+  theme(aspect.ratio = 1) +
+  labs(x = "Observed seed weight (g)",
+       y = "Imputed total seed weight (g)",
+       title = "Comparison of imputation methods against observed data",
+       subtitle = "Black line describes 1:1 correspondence")
 
 
-# Individual biomass variation
-indiv_weight <- glmer(biomass_weight_g ~ 1 + (1|species_code) + (1|block) + (1|fertility) + (1|total_density),
-            data = samples)
-
-summary(indiv_weight)
-data.frame(summary(indiv_weight)$varcor) %>%
-  mutate(proportion_variation= vcov / sum(vcov))
-
-
-# Biomass by fertility
-ggplot(samples, aes(x = species_code, y = biomass_weight_g)) +
-  geom_boxplot() +
-  facet_grid(~ fertility) +
-  theme_bw() +
-  labs(title = "Vegetative biomass")
+# Compare against other species
+corrected_samples <-
+  select(imp, seedling_id, est_weight_pot, est_weight_reg) %>%
+  left_join(samples, .) %>%
+  mutate(est_weight_pot = ifelse(is.na(est_weight_pot), seed_weight_g, est_weight_pot),
+         est_weight_reg = ifelse(is.na(est_weight_reg), seed_weight_g, est_weight_reg))
 
 
-# Seed by biomass
-ggplot(samples, aes(x = biomass_weight_g, seed_weight_g, color = species_code)) +
-  geom_point(size = 2, alpha = .5) +
-  geom_abline(aes(intercept = 0, slope = 1), size = 1, alpha = 0.2) +
-  facet_wrap(~ fertility) +
-  theme_bw() +
-  labs(title = "SLA (cm2.g) per vegetative biomass") +
-  theme(aspect.ratio = 1)
+gather(corrected_samples,
+       method, val,
+       est_weight_pot:est_weight_reg) %>%
+  filter(!is.na(val)) %>%
+    ggplot(., aes(x = biomass_weight_g, y = val)) +
+  geom_point(aes(color = species_code)) +
+  geom_abline(aes(intercept=0, slope = 1)) +
+  facet_grid(method ~ fertility) +
+  theme(aspect.ratio = 1) +
+  labs(x = "Vegetative biomass (g)",
+       y = "Total seed weight (g)",
+       title = "Biomass, seed output comparison of four species",
+       subtitle = "Total ABAR biomass imputed using two different methods, black line = 1:1 correspondence")
 
-# SLA by biomass
-ggplot(samples, aes(x = biomass_weight_g, total_SLA, color = species_code)) +
-  geom_point(size = 1.5, alpha = .5) +
-  geom_abline(aes(intercept = 0, slope = 1), size = 1, alpha = 0.2) +
-  facet_wrap(~ species_code) +
-  theme_bw() +
-  guides(color = F)+
-  labs(title = "SLA (cm2.g) per vegetative biomass") +
-  theme(aspect.ratio = 1)
+# Use regression method for corrected seed weight
+samples <- group_by(corrected_samples, seedling_id) %>%
+  mutate(aboveground_biomass_g =
+           sum(biomass_weight_g,
+           est_weight_reg,
+           total_leaf_weight_g, na.rm = T)) %>%
+  ungroup() %>%
+  select(seedling_id,
+         block,
+         pot,
+         fertility,
+         mixture = competition,
+         pot_density = total_density,
+         position,
+         species_code,
+         species_id,
+         date_planted,
+         age_days,
+         native,
+         exotic,
+         aboveground_biomass_g,
+         vegetative_biomass_g = biomass_weight_g,
+         corrected_seed_weight_g = est_weight_reg,
+         total_SLA)
+
+usethis::use_data(samples, overwrite = T)
+
+
+
+# Summarise pre-transplant seedling biomass (n ~ 40/sp)
+biomass_t0 <- mutate(pretransplant,
+                     species_code = fct_recode(species_code, BHOR = "ABIG"),
+                     species_code = fct_relevel(species_code, "ABAR", "BDIA", "ECUR")) %>%
+  select(-n)
+
+usethis::use_data(biomass_t0, overwrite = T)

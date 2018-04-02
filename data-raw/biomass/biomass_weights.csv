@@ -76,7 +76,7 @@ seedling_id,sample_id,biomass_weight_g,weight_notes
 76,A11-10,0.1351,NA
 77,A11-11,0.1219,NA
 78,A11-12,0.1251,NA
-79,A12-1,0.578,NA
+79,A12-1,0.0578,NA
 80,A12-2,0.1546,NA
 81,A12-3,0.1481,NA
 82,A12-4,0.2264,NA
@@ -976,7 +976,7 @@ seedling_id,sample_id,biomass_weight_g,weight_notes
 987,B12-9,0.1208,NA
 988,B12-10,0.1186,NA
 989,B12-11,0.1495,NA
-990,B12-12,0.7848,? V large.
+990,B12-12,0.0848,NA
 991,B13-1,0.1346,NA
 992,B13-2,0.1308,NA
 993,B13-3,0.095,NA
