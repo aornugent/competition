@@ -1,6 +1,6 @@
 # competition
 
-Packaged dataset from invasive species competitive effects experiment, 2016.
+Packaged dataset from response-surface experiment to evaluate whether the interspecific interactions (hereafter impact) of invasive species varied with nutrient availability and species density  (2016).
 
 ## Example
 
