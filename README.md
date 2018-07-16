@@ -5,8 +5,7 @@ Packaged dataset from response-surface experiment to evaluate whether the inters
 ## Example
 
 ``` r
-data(biomass)
-data(seed)
-data(SLA)
+data(samples)
+
 ```
 
