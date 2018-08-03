@@ -12,7 +12,7 @@
 #' @export
 
 format_data <- function(model,
-                        n_sp = 4,
+                        n_sp = 6,
                         ts = 12,
                         ...) {
 
@@ -37,7 +37,7 @@ format_data <- function(model,
   # Convert factors to numeric
   dat <- select(samples,
            seedling_id, species_code, block, pot,
-           biomass_weight_g, fertility, total_density) %>%
+           aboveground_biomass_g, vegetative_biomass_g, fertility, total_density) %>%
     mutate_at(vars(seedling_id, block, pot,
                    species_code, fertility),
       funs(as.numeric(factor(.)))) %>%
@@ -50,7 +50,8 @@ format_data <- function(model,
     summarise(aboveground_mean = mean(log(aboveground)),
               aboveground_sd = sd(log(aboveground)))
 
-  # Create indices for interacting individuals
+  # Create indices for interacting individuals.
+  # This includes self-interactions (within an individual)
   species <- select(dat, seedling_id, species_code)
 
   interactions <-data.frame(pot = dat$pot,
@@ -59,7 +60,7 @@ format_data <- function(model,
                             fertility = dat$fertility) %>%
     group_by(pot, fertility) %>%
     complete(ind_i, ind_j) %>%
-    filter(ind_i != ind_j) %>%
+    #filter(ind_i != ind_j) %>%
     right_join(species,
                by = c("ind_i" = "seedling_id")) %>%
     right_join(species,
@@ -94,7 +95,7 @@ format_data <- function(model,
          N_individuals = nrow(dat),
          N_interactions = nrow(interactions),
          ts = ts,
-         biomass = dat$biomass_weight_g,
+         biomass = dat$aboveground_biomass_g,
          dens_m1 = dat$total_density - 1,
          species = dat$species_code,
          sp_by_fert = dat$sp_by_fert,

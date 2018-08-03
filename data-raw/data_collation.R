@@ -1,4 +1,6 @@
 # Check full dataset for obvious mistakes
+library(tidyverse)
+library(forcats)
 
 seedlings <- read_csv("data-raw/seedling_list.csv")
 
@@ -110,10 +112,9 @@ samples <- group_by(corrected_samples, seedling_id) %>%
          pot,
          fertility,
          mixture = competition,
-         pot_density = total_density,
+         total_density,
          position,
          species_code,
-         species_id,
          date_planted,
          age_days,
          native,

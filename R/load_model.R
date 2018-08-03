@@ -11,7 +11,7 @@
 
 load_model <- function(model = "BV",
                        path = "models/",
-                       n_sp = 4,
+                       n_sp = 6,
                        ts = 12, ...) {
 
   # Format filename

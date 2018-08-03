@@ -2,15 +2,10 @@
 % Please edit documentation in R/create_figures.R
 \name{interaction_coef}
 \alias{interaction_coef}
-\alias{interaction_coef}
 \title{Interaction coefficients}
 \usage{
 interaction_coef(m, n_sp = 4, ts = 12)
-
-interaction_coef(m, n_sp = 4, ts = 12)
 }
 \description{
-Interaction coefficients
-
 Interaction coefficients
 }

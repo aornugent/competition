@@ -15,10 +15,12 @@
 #' }
 #'
 #'
-#' @usage create_figures_models(fig = 1)
+#' @usage create_figures_models(fig = 1, n_sp = 6)
 #' @export
 
 create_figures <-  function(figs = 1:6, ...) {
+
+  dir.create("figures/", showWarnings = F)
 
   # Load model
   model_output <- load_model(...)
@@ -43,7 +45,7 @@ create_figures <-  function(figs = 1:6, ...) {
 }
 
 #' Growth rates
-growth_rates <- function(m, n_sp = 4, ts = 12){
+growth_rates <- function(m, n_sp = 6, ts = 12){
 
   lambda <- extract_pars(m$model_summary, "^lambda", "id") %>%
     left_join(m$data_list$fitness_components, by = c("id" = "l_i")) %>%
@@ -51,20 +53,27 @@ growth_rates <- function(m, n_sp = 4, ts = 12){
            species_code_i = factor(species_code_i, labels = m$data_list$species_code))
 
   p <- ggplot(lambda,
-              aes(x = factor(fertility))) +
+              aes(x = factor(fertility),
+                  y = mean)) +
     geom_hline(aes(yintercept = 1),
                colour = "red", size = 0.6) +
-    geom_point(aes(y = mean), size = 3) +
+    geom_line(aes(color = species_code_i,
+                  group = species_code_i),
+              size = 1) +
+    geom_point(size = 3,
+               position = position_dodge(width = 1)) +
     geom_errorbar(aes(ymin = conf_low,
                       ymax = conf_high),
+                  position = position_dodge(width = 1),
                   size = 1, width = 0) +
     annotate("segment", x = -Inf, xend = Inf,
              y = -Inf, yend = -Inf) +
     annotate("segment", x = -Inf, xend = -Inf,
              y = -Inf, yend = Inf) +
-    facet_grid(~ species_code_i) +
     labs(x = "Fertility",
-         y = "lambda\n(multiplicative growth rate)")
+         y = "lambda\n(multiplicative growth rate)",
+         color = "Species") +
+    theme(legend.position = "bottom")
 
   filename <- paste0("figures/growth_rates_", n_sp, "sp", ts, "ts.png")
 
@@ -77,7 +86,7 @@ growth_rates <- function(m, n_sp = 4, ts = 12){
 
 
 #' Interaction coefficients
-interaction_coef <- function(m, n_sp = 4, ts = 12){
+interaction_coef <- function(m, n_sp = 6, ts = 12){
 
   a_ij <- extract_pars(m$model_summary, "^alpha", "id") %>%
     left_join(m$data_list$fitness_components, by = c("id" = "a_ij")) %>%
@@ -86,7 +95,8 @@ interaction_coef <- function(m, n_sp = 4, ts = 12){
            species_code_j = factor(species_code_j, labels = m$data_list$species_code))
 
   p <- ggplot(a_ij,
-              aes(x = factor(fertility))) +
+              aes(x = factor(fertility),
+                  color = species_code_j)) +
     geom_hline(aes(yintercept = 1),
                colour = "red", size = 0.6) +
     geom_point(aes(y = mean), size = 3) +
@@ -99,41 +109,8 @@ interaction_coef <- function(m, n_sp = 4, ts = 12){
              y = -Inf, yend = Inf) +
     facet_grid(species_code_j ~ species_code_i) +
     labs(x = "Fertility",
-         y = "a_ij (effect of row on column)")
-
-  filename <- paste0("figures/interaction_coefficients_", n_sp, "sp", ts, "ts.png")
-
-  n = n_sp * 2 + 1
-
-  ggsave(filename = filename, plot = p, device = "png",
-         height = n, width = n, dpi = 400, units = "in")
-  print(p)
-}
-
-#' Interaction coefficients
-interaction_coef <- function(m, n_sp = 4, ts = 12){
-
-  a_ij <- extract_pars(m$model_summary, "^alpha", "id") %>%
-    left_join(m$data_list$fitness_components, by = c("id" = "a_ij")) %>%
-    mutate(fertility = factor(fertility, labels = m$data_list$fertility_code),
-           species_code_i = factor(species_code_i, labels = m$data_list$species_code),
-           species_code_j = factor(species_code_j, labels = m$data_list$species_code))
-
-  p <- ggplot(a_ij,
-              aes(x = factor(fertility))) +
-    geom_hline(aes(yintercept = 1),
-               colour = "red", size = 0.6) +
-    geom_point(aes(y = mean), size = 3) +
-    geom_errorbar(aes(ymin = conf_low,
-                      ymax = conf_high),
-                  size = 1, width = 0) +
-    annotate("segment", x = -Inf, xend = Inf,
-             y = -Inf, yend = -Inf) +
-    annotate("segment", x = -Inf, xend = -Inf,
-             y = -Inf, yend = Inf) +
-    facet_grid(species_code_j ~ species_code_i) +
-    labs(x = "Fertility",
-         y = "a_ij (effect of row on column)")
+         y = "a_ij (effect of row on column)",
+         color = "Competitor")
 
   filename <- paste0("figures/interaction_coefficients_", n_sp, "sp", ts, "ts.png")
 
@@ -145,7 +122,7 @@ interaction_coef <- function(m, n_sp = 4, ts = 12){
 }
 
 #' Fitness differences
-fitness_differences <- function(m, n_sp = 4, ts = 12){
+fitness_differences <- function(m, n_sp = 6, ts = 12){
 
   rho <- extract_pars(m$model_summary, "^fitness_difference", "id") %>%
     left_join(m$data_list$fitness_components, by = c("id" = "a_ij")) %>%
@@ -186,7 +163,7 @@ fitness_differences <- function(m, n_sp = 4, ts = 12){
 }
 
 #' Niche overlap
-niche_overlap <- function(m, n_sp = 4, ts = 12){
+niche_overlap <- function(m, n_sp = 6, ts = 12){
 
   gamma <- extract_pars(m$model_summary, "^niche_overlap", "id") %>%
     left_join(m$data_list$fitness_components, by = c("id" = "a_ij")) %>%
@@ -226,30 +203,45 @@ niche_overlap <- function(m, n_sp = 4, ts = 12){
   print(p)
 }
 
-# Competitive ability
-competitive_ability <- function(m, n_sp = 4, ts = 12){
+#' Competitive ability
+#'
+#' @importFrom stringr str_extract
+
+
+competitive_ability <- function(m, n_sp = 6, ts = 12){
 
   gamma <- extract_pars(m$model_summary, "^competitive_ability", "id") %>%
     left_join(m$data_list$fitness_components, by = c("id" = "a_ij")) %>%
     mutate(fertility = factor(fertility, labels = m$data_list$fertility_code),
            species_code_i = factor(species_code_i, labels = m$data_list$species_code),
-           species_code_j = factor(species_code_j, labels = m$data_list$species_code))
+           species_code_j = factor(species_code_j, labels = m$data_list$species_code)) %>%
+    mutate(inv = str_extract(paste(species_code_i, species_code_j), "ABAR|BDIA|ECUR"),
+           nat = str_extract(paste(species_code_i, species_code_j), "BHOR|PLAB|RCAES|NAT"),
+           group = ifelse(as.numeric(species_code_i) < 4,
+                        "Invader", "Resident")) %>%
+    filter(!is.na(inv), !is.na(nat))
 
   p <- ggplot(gamma,
-              aes(x = factor(fertility))) +
+              aes(x = factor(fertility),
+                  shape = group)) +
     geom_hline(aes(yintercept = 1),
                colour = "red", size = 0.6) +
-    geom_point(aes(y = mean), size = 3) +
     geom_errorbar(aes(ymin = conf_low,
                       ymax = conf_high),
-                  size = 1, width = 0) +
+                  size = 1, width = 0,
+                  position = position_dodge(width = 0.2)) +
+      geom_point(aes(y = mean), size = 3, fill = "white",
+               position = position_dodge(width = 0.2)) +
+    scale_shape_manual(values = c(16, 21)) +
     annotate("segment", x = -Inf, xend = Inf,
              y = -Inf, yend = -Inf) +
     annotate("segment", x = -Inf, xend = -Inf,
              y = -Inf, yend = Inf) +
-    facet_grid(species_code_j ~ species_code_i) +
+    facet_grid(nat ~ inv, scales = "free") +
     labs(x = "Fertility",
-         y = "Competitive ability")
+         y = "Competitive ability",
+         shape = "") +
+    theme(legend.position = "bottom")
 
   filename <- paste0("figures/competitive_ability_", n_sp, "sp", ts, "ts.png")
 
@@ -260,7 +252,8 @@ competitive_ability <- function(m, n_sp = 4, ts = 12){
   print(p)
 }
 
-posterior_prediction <- function(m, n_sp = 4, ts = 12){
+#' Posterior prediction
+posterior_prediction <- function(m, n_sp = 6, ts = 12){
 
   dat <- data.frame(obs = m$data_list$biomass,
                     pred = extract_pars(m$model_summary, "^pred_biomass", "ind")$mean,

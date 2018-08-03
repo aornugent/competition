@@ -7,15 +7,15 @@
 run_model(model = "m1")
 }
 \arguments{
+\item{n_sp}{Treat residents as separate species (n=6), or single community (n=4).}
+
+\item{ts}{Number of timesteps for iteration method.}
+
 \item{path}{Directory to save model outputs, defaults to /models.}
 
 \item{check}{auto-run model checks, boolean (default = T).}
 
 \item{model}{BV (~2hrs).}
-
-\item{n_sp}{Treat residents as separate species (n=6), or single community (n=4).}
-
-\item{ts}{Number of timesteps for iteration method.}
 }
 \description{
 Models are coded in Stan and can be found in the \code{/models} subdirectory.
