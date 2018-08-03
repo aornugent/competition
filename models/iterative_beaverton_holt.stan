@@ -40,7 +40,7 @@ transformed parameters{
     vector[N_individuals] log_sum_alpha;
     log_mu[1] = log_biomass_t0;
 
-    for(t in 2:ts){
+    for(t in 1:ts){
       int pos = 1;
       alpha = exp(log_alpha[alpha_ij] + log_mu[1, individual_j]);
 
