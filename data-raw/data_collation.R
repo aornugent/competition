@@ -95,10 +95,15 @@ gather(corrected_samples,
   geom_abline(aes(intercept=0, slope = 1)) +
   facet_grid(method ~ fertility) +
   theme(aspect.ratio = 1) +
+  annotate(geom = "segment", x = -Inf, xend = -Inf, y = -Inf, yend = Inf) +
+  annotate(geom = "segment", x = -Inf, xend = Inf, y = -Inf, yend = -Inf) +
   labs(x = "Vegetative biomass (g)",
        y = "Total seed weight (g)",
-       title = "Biomass, seed output comparison of four species",
-       subtitle = "Total ABAR biomass imputed using two different methods, black line = 1:1 correspondence")
+        color = "",
+       title = "Biomass, seed output comparison of four species")
+
+ggsave(last_plot(), filename = 'figures/Sxx_corrected_seedmass.png',
+  device = "png", dpi = 600, width = 10, height = 8)
 
 # Use regression method for corrected seed weight
 samples <- group_by(corrected_samples, seedling_id) %>%
@@ -128,10 +133,12 @@ usethis::use_data(samples, overwrite = T)
 
 
 
-# Summarise pre-transplant seedling biomass (n ~ 40/sp)
+# Summarise pre-transplant seedling biomass
 biomass_t0 <- mutate(pretransplant,
                      species_code = fct_recode(species_code, BHOR = "ABIG"),
                      species_code = fct_relevel(species_code, "ABAR", "BDIA", "ECUR")) %>%
-  select(-n)
+  group_by(species_code, sheet) %>%
+  summarise(n_individuals = sum(n),
+    aboveground_sample_mean = sum(aboveground) / n_individuals)
 
 usethis::use_data(biomass_t0, overwrite = T)

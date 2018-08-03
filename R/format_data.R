@@ -47,8 +47,8 @@ format_data <- function(model,
 
   # Calculate initial size distribution
   log_t0 <- group_by(biomass_t0, species_code) %>%
-    summarise(aboveground_mean = mean(log(aboveground)),
-              aboveground_sd = sd(log(aboveground)))
+    summarise(aboveground_mean = mean(log(aboveground_sample_mean)),
+              aboveground_sd = sd(log(aboveground_sample_mean)))
 
   # Create indices for interacting individuals.
   # This includes self-interactions (within an individual)
