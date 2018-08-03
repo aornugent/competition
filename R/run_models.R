@@ -22,16 +22,16 @@
 
 run_models <- function(
   models = c("BV"),
-  # n_sp = 4,
-  # ts = 12,
+  n_sp = 6,
+  ts = 12,
   path = "models/",
   check = T, ...) {
 
   for(model in models) {
-    model_output <- run_stan_model(model, path, ...)
+    model_output <- run_stan_model(model, path, n_sp, ts)
 
     if(check == T)
-      check_models(model, path, model_output, ...)
+      check_models(model_output = model_output)
   }
 }
 
@@ -47,14 +47,14 @@ run_models <- function(
 #'
 #' @export
 
-run_stan_model <- function(model, path, ...) {
+run_stan_model <- function(model, path, n_sp, ts) {
 
   # Set parallel options
   rstan::rstan_options(auto_write = TRUE)
   options(mc.cores = parallel::detectCores() - 1)
 
   # Do data prep
-  data_list <- format_data(model, ...)
+  data_list <- format_data(model, n_sp, ts)
 
   # Get appropriate file
   model_file <- switch(
