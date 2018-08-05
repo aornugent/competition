@@ -13,8 +13,8 @@ data {
   int<lower=1, upper=N_alpha> alpha_ij[N_interactions];
   int<lower=1, upper=N_individuals> individual_j[N_interactions];
   //int<lower=1, upper=N_block_effect> block_by_sp[N_individuals];
-  vector[S] log_mu_t0;
-  vector<lower=0>[S] log_sigma_t0;
+  //vector[S] log_mu_t0;
+  //vector<lower=0>[S] log_sigma_t0;
   int<lower=1, upper=N_alpha> a_ii[N_alpha];
   int<lower=1, upper=N_alpha> a_jj[N_alpha];
   int<lower=1, upper=N_alpha> a_ij[N_alpha];
@@ -31,9 +31,16 @@ parameters {
   vector[N_alpha] log_alpha;
   //vector[N_block_effect] log_block_effect;
   vector[N_individuals] log_biomass_t0;
+  real<lower=0> unknown_log_sigma_t0[3];
 }
 transformed parameters{
   vector[N_individuals] log_pred_biomass;
+
+  vector[S] log_mu_t0 = [-5.5464, -5.1262, -9.0230, -6.2277, -8.3966, -7.7885]';
+
+  vector[S] log_sigma_t0 = [0.7860, 0.4801, unknown_log_sigma_t0[1], 0.3850,
+                        unknown_log_sigma_t0[2], unknown_log_sigma_t0[3]]';
+
   {
     vector[N_individuals] log_mu[2];
     vector[N_interactions] alpha;
@@ -60,9 +67,9 @@ model{
   // Obs
   log_biomass ~ normal(log_pred_biomass, log_sigma);
 
-  // Priors
+  // Priorsrun
+  unknown_log_sigma_t0 ~ normal(0.6942, 0.3731);
   log_biomass_t0 ~ normal(log_mu_t0[species], log_sigma_t0[species]);
-  //log_block_effect ~ normal(0, 1);
   log_lambda ~ normal(0, 1);
   log_alpha ~ normal(0, 1);
   log_sigma ~ normal(0, 1);
