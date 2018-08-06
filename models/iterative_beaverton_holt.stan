@@ -7,7 +7,7 @@ data {
   int<lower=0> N_interactions;
   int ts;
   vector<lower=0>[N_individuals] biomass;
-  int<lower=0> dens_m1[N_individuals];
+  int<lower=0> dens[N_individuals];
   int<lower=1, upper=S> species[N_individuals];
   int<lower=1, upper=S*K> sp_by_fert[N_individuals];
   int<lower=1, upper=N_alpha> alpha_ij[N_interactions];
@@ -52,8 +52,8 @@ transformed parameters{
       alpha = exp(log_alpha[alpha_ij] + log_mu[1, individual_j]);
 
       for(i in 1:N_individuals){
-        log_sum_alpha[i] = log(1 + sum(segment(alpha, pos, dens_m1[i])));
-        pos = pos + dens_m1[i];
+        log_sum_alpha[i] = log(1 + sum(segment(alpha, pos, dens[i])));
+        pos = pos + dens[i];
       }
 
       log_mu[2] = log_lambda[sp_by_fert] - log_sum_alpha + log_mu[1];
