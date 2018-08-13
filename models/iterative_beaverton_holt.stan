@@ -70,7 +70,9 @@ model{
   vector[S] log_sigma_t0 = [0.7860, 0.4801, unknown_log_sigma_t0[1], 0.3850,
                         unknown_log_sigma_t0[2], unknown_log_sigma_t0[3]]';
 
-  unknown_log_sigma_t0 ~ normal(0.6942, 0.3731);
+  unknown_log_sigma_t0[1] ~ normal(1.2834, 0.1584);
+  unknown_log_sigma_t0[2] ~ normal(0.8460, 0.1920);
+  unknown_log_sigma_t0[3] ~ normal(0.8438, 0.1467);
 
   log_biomass_t0 ~ normal(log_mu_t0[species], log_sigma_t0[species]);
 
