@@ -10,7 +10,7 @@
 #'  \item{BV: Beverton-Holt biomass model}
 #' }
 #'
-#' @param model BV (~2hrs).
+#' @param model one of c("BV", "GL")
 #' @param n_sp  Treat residents as separate species (n=6), or single community (n=4).
 #' @param ts    Number of timesteps for iteration method.
 #' @param path  Directory to save model outputs, defaults to /models.
@@ -42,7 +42,7 @@ run_models <- function(
 #' adaptive Hamiltonian Monte Carlo. Sensible default settings are provided,
 #' but can be tweaked as necessary.
 #'
-#' @param model one of c("BV")
+#' @param model one of c("BV", "GL")
 #' @param ... tuning parameters for Stan sampler
 #'
 #' @export
@@ -59,7 +59,8 @@ run_stan_model <- function(model, path, n_sp, ts) {
   # Get appropriate file
   model_file <- switch(
     model,
-    BV = "models/iterative_beaverton_holt.stan"
+    BV = "models/iterative_beaverton_holt.stan",
+    GL = "models/gompertz_like.stan"
   )
 
   # Pre-compile model

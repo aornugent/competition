@@ -38,8 +38,9 @@ transformed parameters{
 
   {
     vector[N_individuals] log_mu[2];
+    vector[N_individuals] sum_alpha;
     vector[N_interactions] alpha;
-    vector[N_individuals] log_sum_alpha;
+
     log_mu[1] = log_biomass_t0;
 
     for(t in 1:ts){
@@ -47,11 +48,11 @@ transformed parameters{
       alpha =  exp(log_alpha[alpha_ij] + log_mu[1, individual_j]);
 
       for(i in 1:N_individuals){
-        log_sum_alpha[i] = log(1 + sum(segment(alpha, pos, dens[i])));
+        sum_alpha[i] = sum(segment(alpha, pos, dens[i]));
         pos = pos + dens[i];
       }
 
-      log_mu[2] = log_mu[1] + log_lambda[sp_by_fert] - log_sum_alpha;
+      log_mu[2] = log_lambda[sp_by_fert] + log_mu[1] - sum_alpha;
       log_mu[1] = log_mu[2];
     }
 
@@ -92,8 +93,8 @@ generated quantities{
   lambda = exp(log_lambda);
   alpha = exp(log_alpha);
 
-  carrying_capacity = (lambda[l_i] - 1) ./ alpha[a_ii];
-  competitive_ability = (lambda[l_i] - 1) ./ sqrt(alpha[a_ii] .* alpha[a_ij]);
+  carrying_capacity = log_lambda[l_i] ./ alpha[a_ii];
+  competitive_ability = log_lambda[l_i] ./ sqrt(alpha[a_ii] .* alpha[a_ij]);
   niche_overlap = sqrt((alpha[a_ji] ./ alpha[a_ii]) .* (alpha[a_ij] ./ alpha[a_jj]));
   {
     vector[N_alpha] eta = 1 - niche_overlap[a_ij] .* (competitive_ability[l_j] ./ competitive_ability[l_i]);
