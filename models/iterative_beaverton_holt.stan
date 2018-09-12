@@ -97,8 +97,8 @@ generated quantities{
   competitive_ability = (lambda[l_i] - 1) ./ sqrt(alpha[a_ii] .* alpha[a_ij]);
   niche_overlap = sqrt((alpha[a_ji] ./ alpha[a_ii]) .* (alpha[a_ij] ./ alpha[a_jj]));
   {
-    vector[N_alpha] eta = 1 - niche_overlap[a_ij] .* (competitive_ability[l_j] ./ competitive_ability[l_i]);
-    vector[N_alpha] gamma = 1 - niche_overlap[a_ij] .* niche_overlap[a_ij];
+    vector[N_fitness] eta = 1 - niche_overlap[a_ij] .* (competitive_ability[l_j] ./ competitive_ability[l_i]);
+    vector[N_fitness] gamma = 1 - niche_overlap[a_ij] .* niche_overlap[a_ij];
    // equilibrium_biomass = competitive_ability[l_i] .* eta ./ gamma;
   }
 
