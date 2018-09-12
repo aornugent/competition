@@ -32,7 +32,7 @@ create_figures <-  function(figs = 1:6, ...) {
     interaction_coef(model_output, ...)
 
     # Fitness
-    fitness_differences(model_output, ...)
+   # fitness_differences(model_output, ...)
 
     # Niche
     niche_overlap(model_output, ...)

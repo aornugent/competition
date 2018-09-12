@@ -48,11 +48,6 @@ transformed parameters{
 
       for(i in 1:N_individuals){
         log_sum_alpha[i] = log(1 + sum(segment(alpha, pos, dens[i])));
-
-        // Restrict growth to be non-negative (>= 0)
-        if(log_sum_alpha[i] > log_lambda[sp_by_fert[i]])
-          log_sum_alpha[i] = log_lambda[sp_by_fert[i]];
-
         pos = pos + dens[i];
       }
 

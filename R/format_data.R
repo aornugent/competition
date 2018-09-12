@@ -67,7 +67,7 @@ format_data <- function(model,
                by = c("ind_j" = "seedling_id"),
                suffix = c("_i", "_j")) %>%
     ungroup() %>%
-    mutate(alpha_ij = paste(fertility, species_code_i, species_code_j),
+    mutate(alpha_ij = paste(species_code_i, species_code_j),
            alpha_ij_id = as.numeric(as.factor(alpha_ij))) %>%
     arrange(ind_i)
 
@@ -76,13 +76,13 @@ format_data <- function(model,
     distinct() %>%
     mutate(l_i = paste(fertility, species_code_i),
            l_j = paste(fertility, species_code_j),
-           a_ii = paste(fertility, species_code_i, species_code_i),
-           a_jj = paste(fertility, species_code_j, species_code_j),
-           a_ij = paste(fertility, species_code_i, species_code_j),
-           a_ji = paste(fertility, species_code_j, species_code_i)) %>%
+           a_ii = paste(species_code_i, species_code_i),
+           a_jj = paste(species_code_j, species_code_j),
+           a_ij = paste(species_code_i, species_code_j),
+           a_ji = paste(species_code_j, species_code_i)) %>%
     mutate_all(funs(factor)) %>%
     arrange(a_ij) %>%
-    mutate_at(vars(a_ii, a_jj), funs(factor(., levels = a_ij))) %>%
+    mutate_at(vars(a_ii, a_jj), funs(factor(., levels = levels(a_ij)))) %>%
     mutate_all(funs(as.numeric))
 
   # Package data as list
