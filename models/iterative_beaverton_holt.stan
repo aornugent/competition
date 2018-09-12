@@ -5,6 +5,7 @@ data {
   int<lower=1> N_block_effect;
   int<lower=1> N_individuals;
   int<lower=0> N_interactions;
+  int<lower=1> N_fitness;
   int ts;
   vector<lower=0>[N_individuals] biomass;
   int<lower=0> dens[N_individuals];
@@ -15,12 +16,12 @@ data {
   //int<lower=1, upper=N_block_effect> block_by_sp[N_individuals];
   //vector[S] log_mu_t0;
   //vector<lower=0>[S] log_sigma_t0;
-  int<lower=1, upper=N_alpha> a_ii[N_alpha];
-  int<lower=1, upper=N_alpha> a_jj[N_alpha];
-  int<lower=1, upper=N_alpha> a_ij[N_alpha];
-  int<lower=1, upper=N_alpha> a_ji[N_alpha];
-  int<lower=1, upper=S * K> l_i[N_alpha];
-  int<lower=1, upper=S * K> l_j[N_alpha];
+  int<lower=1, upper=N_alpha> a_ii[N_fitness];
+  int<lower=1, upper=N_alpha> a_jj[N_fitness];
+  int<lower=1, upper=N_alpha> a_ij[N_fitness];
+  int<lower=1, upper=N_alpha> a_ji[N_fitness];
+  int<lower=1, upper=S * K> l_i[N_fitness];
+  int<lower=1, upper=S * K> l_j[N_fitness];
 }
 transformed data{
   vector[N_individuals] log_biomass = log(biomass);
@@ -83,9 +84,9 @@ model{
 generated quantities{
   vector[S * K] lambda;
   vector[N_alpha] alpha;
-  vector[N_alpha] carrying_capacity;
-  vector[N_alpha] competitive_ability;
-  vector[N_alpha] niche_overlap;
+  vector[N_fitness] carrying_capacity;
+  vector[N_fitness] competitive_ability;
+  vector[N_fitness] niche_overlap;
   //vector[N_alpha] equilibrium_biomass;
   vector[N_individuals] pred_biomass;
 
