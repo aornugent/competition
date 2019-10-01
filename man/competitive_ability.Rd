@@ -4,7 +4,7 @@
 \alias{competitive_ability}
 \title{Competitive ability}
 \usage{
-competitive_ability(m, n_sp = 4, ts = 12)
+competitive_ability(m, n_sp = 6, ts = 12)
 }
 \description{
 Competitive ability

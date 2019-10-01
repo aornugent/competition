@@ -15,7 +15,7 @@ run_model(model = "m1")
 
 \item{check}{auto-run model checks, boolean (default = T).}
 
-\item{model}{BV (~2hrs).}
+\item{model}{one of c("BV", "GL")}
 }
 \description{
 Models are coded in Stan and can be found in the \code{/models} subdirectory.

@@ -4,7 +4,7 @@
 \alias{fitness_differences}
 \title{Fitness differences}
 \usage{
-fitness_differences(m, n_sp = 4, ts = 12)
+fitness_differences(m, n_sp = 6, ts = 12)
 }
 \description{
 Fitness differences

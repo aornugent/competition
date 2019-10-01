@@ -23,10 +23,11 @@ NULL
 .onLoad <- function(libname, pkgname) {
 
   theme_impact <-
-    theme_minimal() +
+    theme_bw() +
       theme(
         text = element_text(size = 16),
         panel.grid = element_blank(),
+        strip.background = element_blank(),
         axis.line.x = element_line(
           color="black",
           size = 0.5),
@@ -127,4 +128,3 @@ nested <- function(x, y){
   idx <- unname(apply(nestbl, 1, function(x) which(x > 0)))
   return(idx)
 }
-

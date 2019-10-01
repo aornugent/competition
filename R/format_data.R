@@ -1,118 +1,100 @@
 #' Format data for analysis
 #'
-#' Takes the preloaded Pinnacle vegetation dataset and prepares it for
-#' analysis in Stan. The Stan models are written such that the are able
-#' to take largely the same data structure, with the exception of M0.
+#' Loads and prepares the experimental data for analysis in Stan.
 #'
-#' @param n_sp  Treat residents as separate species (n=6), or single community (n=4).
-#' @param ts    Number of timesteps for iteration method.
+#' @return
+#'  \itemize{
+#'   \item N    - the number of individuals
+#'   \item N_jk - the number of observed interactions
+#'   \item S    - the number of species
+#'   \item A    - the number of distinct interactions
+#'   \item P    - the number of blocks
+#'   \item y    - aboveground biomass measurements
+#'   \item jl   - IDs for species j in fertility treatment l
+#'   \item jkl  - IDs for interaction between species k on species j in treatment l
+#'   \item jp   - IDs for random effect of block p on species j
+#'   \item n_i  - number of competitors
+#'  }
 #'
-#' @importFrom forcats fct_collapse
-#' @importFrom tidyr complete
+#' @examples
+#' # load data
+#' data_list <- format_data()
+#' str(data_list)
+#'
 #' @export
 
-format_data <- function(model,
-                        n_sp = 6,
-                        ts = 12,
-                        ...) {
+format_data <- function(...) {
 
   # Load dataset
   data(samples)
-  data(biomass_t0)
 
-  # Group resident species
-  if(n_sp == 4){
-    samples <- mutate(samples,
-             species_code = fct_collapse(species_code,
-                                         NAT = c("BHOR", "RCAES", "PLAB")))
+  # Create indices, calculate the number of competitors in a pot.
+  d <- samples %>%
+    mutate(sp = as.numeric(species_code),
+           f = as.numeric(fertility),
+           sp_fert = as.numeric(factor(paste(f, sp))),
+           blck = as.numeric(factor(block)),
+           sp_blck = as.numeric(factor(paste(sp, blck)))) %>%
+    arrange(seedling_id) %>%
+    group_by(pot) %>%
+    mutate(n_i = n() - 1) %>%
+    ungroup()
 
-    biomass_t0 <- mutate(biomass_t0,
-             species_code = fct_collapse(species_code,
-                                         NAT = c("BHOR", "RCAES", "PLAB")))
-  }
 
-  species_code = levels(samples$species_code)
-  fertility_code = levels(samples$fertility)
-
-  # Convert factors to numeric
-  dat <- select(samples,
-           seedling_id, species_code, block, pot,
-           aboveground_biomass_g, vegetative_biomass_g, fertility, total_density) %>%
-    mutate_at(vars(seedling_id, block, pot,
-                   species_code, fertility),
-      funs(as.numeric(factor(.)))) %>%
-    mutate(sp_by_fert = as.numeric(factor(paste(fertility, species_code))),
-      block_by_sp = as.numeric(factor(paste(block, species_code)))) %>%
-    arrange(seedling_id)
-
-  # Calculate initial size distribution
-  log_t0 <- group_by(biomass_t0, species_code) %>%
-    summarise(aboveground_mean = mean(log(aboveground_sample_mean)),
-              aboveground_sd = sd(log(aboveground_sample_mean)))
-
-  # Create indices for interacting individuals.
-  # This includes self-interactions (within an individual)
-  species <- select(dat, seedling_id, species_code)
-
-  interactions <-data.frame(pot = dat$pot,
-                            ind_i = dat$seedling_id,
-                            ind_j = dat$seedling_id,
-                            fertility = dat$fertility) %>%
-    group_by(pot, fertility) %>%
-    complete(ind_i, ind_j) %>%
-    #filter(ind_i != ind_j) %>%
-    right_join(species,
-               by = c("ind_i" = "seedling_id")) %>%
-    right_join(species,
-               by = c("ind_j" = "seedling_id"),
-               suffix = c("_i", "_j")) %>%
+  # Generate interaction indices for each individual, summed by pot in model
+  interactions <- data.frame(pot = d$pot,
+                             ind_j = d$seedling_id,
+                             ind_k = d$seedling_id) %>%
+    group_by(pot) %>%
+    complete(ind_j, ind_k) %>%
+    filter(ind_j != ind_k) %>%
     ungroup() %>%
-    mutate(alpha_ij = paste(species_code_i, species_code_j),
-           alpha_ij_id = as.numeric(as.factor(alpha_ij))) %>%
-    arrange(ind_i)
+    arrange(ind_j) %>%
+    left_join(select(d, ind_j = seedling_id, f, sp_j = sp)) %>%
+    left_join(select(d, ind_k = seedling_id, sp_k = sp)) %>%
+    # mutate_at(vars(sp_j, sp_k), ~if_else(. > 3, 4, .)) %>%
+    mutate(a_jk = as.numeric(factor(paste0(f, sp_j, sp_k))))
 
-  # Create indicies for fitness components between interacting species.
-  fitness_components <- select(interactions, fertility, species_code_i, species_code_j) %>%
-    distinct() %>%
-    mutate(l_i = paste(fertility, species_code_i),
-           l_j = paste(fertility, species_code_j),
-           a_ii = paste(species_code_i, species_code_i),
-           a_jj = paste(species_code_j, species_code_j),
-           a_ij = paste(species_code_i, species_code_j),
-           a_ji = paste(species_code_j, species_code_i)) %>%
-    mutate_all(funs(factor)) %>%
-    arrange(a_ij) %>%
-    mutate_at(vars(a_ii, a_jj), funs(factor(., levels = levels(a_ij)))) %>%
-    mutate_all(funs(as.numeric))
+  # Recode species for post-processing
+  sp <- select(d, j = sp_fert, fr = f, sp, species_code, fertility) %>%
+    unique() %>%
+    mutate(species = factor(species_code,
+                            labels = c("A. fatua", "B. diandrus",
+                                       "E. curvula", "B. hordeaceus",
+                                       "P. labillardieri", "R. caespitosum")))
 
-  # Package data as list
-  data_list = append(
-    list(S = max(dat$species_code),
-         K = max(dat$fertility),
-         N_alpha = max(interactions$alpha_ij_id),
-         N_pots = max(dat$pot),
-         N_block_effect = max(dat$block_by_sp),
-         N_individuals = nrow(dat),
-         N_interactions = nrow(interactions),
-         N_fitness = nrow(fitness_components),
-         ts = ts,
-         biomass = dat$aboveground_biomass_g,
-         dens = dat$total_density,
-         species = dat$species_code,
-         sp_by_fert = dat$sp_by_fert,
-         alpha_ij = interactions$alpha_ij_id,
-         species_i = interactions$species_code_i,
-         species_j = interactions$species_code_j,
-         individual_j = interactions$ind_j,
-         block_by_sp = dat$block_by_sp,
-         log_mu_t0 = log_t0$aboveground_mean,
-         log_sigma_t0 = log_t0$aboveground_sd),
-    as.list(fitness_components[, 4:9]))
+  a_jk <- select(interactions, jk = a_jk, fertility = f,
+                 species_j = sp_j, species_k = sp_k) %>%
+    unique() %>%
+    mutate_at(vars(species_j, species_k),
+                   ~ factor(., labels = c("A. fatua", "B. diandrus",
+                                          "E. curvula", "B. hordeaceus",
+                                          "P. labillardieri", "R. caespitosum"))) %>%
+    mutate_at(vars(fertility), ~ factor(., labels = c("LOW", "MED", "HIGH")))
 
-  data_list$species_code = species_code
-  data_list$fertility_code = fertility_code
-  data_list$interactions = interactions
-  data_list$fitness_components = fitness_components
+  blck <- select(d, sp_blck, blck, species_code, block) %>%
+    unique() %>%
+    mutate(species = factor(species_code,
+                            labels = c("A. fatua", "B. diandrus",
+                                       "E. curvula", "B. hordeaceus",
+                                       "P. labillardieri", "R. caespitosum")))
+
+
+  data_list <- list(
+    N = nrow(d),
+    N_jk = nrow(interactions),
+    JK = max(d$sp_fert),
+    JKL = max(interactions$a_jk),
+    B = max(d$blck),
+    y = d$aboveground_biomass_g,
+    jk = d$sp_fert,
+    jkl = interactions$a_jk,
+    b = d$blck,
+    n_l = d$n_i,
+    species = sp,
+    interactions = a_jk,
+    block = blck
+  )
 
   return(data_list)
 }

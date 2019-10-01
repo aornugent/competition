@@ -4,7 +4,7 @@
 \alias{growth_rates}
 \title{Growth rates}
 \usage{
-growth_rates(m, n_sp = 4, ts = 12)
+growth_rates(m, n_sp = 6, ts = 12)
 }
 \description{
 Growth rates

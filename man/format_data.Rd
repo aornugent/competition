@@ -4,15 +4,28 @@
 \alias{format_data}
 \title{Format data for analysis}
 \usage{
-format_data(model, n_sp = 4, ts = 12, ...)
+format_data(...)
 }
-\arguments{
-\item{n_sp}{Treat residents as separate species (n=6), or single community (n=4).}
-
-\item{ts}{Number of timesteps for iteration method.}
+\value{
+\itemize{
+\item N    - the number of individuals
+\item N_jk - the number of observed interactions
+\item S    - the number of species
+\item A    - the number of distinct interactions
+\item P    - the number of blocks
+\item y    - aboveground biomass measurements
+\item jl   - IDs for species j in fertility treatment l
+\item jkl  - IDs for interaction between species k on species j in treatment l
+\item jp   - IDs for random effect of block p on species j
+\item n_i  - number of competitors
+}
 }
 \description{
-Takes the preloaded Pinnacle vegetation dataset and prepares it for
-analysis in Stan. The Stan models are written such that the are able
-to take largely the same data structure, with the exception of M0.
+Loads and prepares the experimental data for analysis in Stan.
+}
+\examples{
+# load data
+data_list <- format_data()
+str(data_list)
+
 }

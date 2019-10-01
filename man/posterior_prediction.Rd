@@ -4,7 +4,7 @@
 \alias{posterior_prediction}
 \title{Posterior prediction}
 \usage{
-posterior_prediction(m, n_sp = 4, ts = 12)
+posterior_prediction(m, n_sp = 6, ts = 12)
 }
 \description{
 Posterior prediction

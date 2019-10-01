@@ -4,7 +4,7 @@
 \alias{create_figures}
 \title{Create figures}
 \usage{
-create_figures_models(fig = 1)
+create_figures_models(fig = 1, n_sp = 6)
 }
 \description{
 Creates a series of figures to aide the interpretation of model outputs.

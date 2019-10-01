@@ -4,10 +4,10 @@
 \alias{run_stan_model}
 \title{Run Stan model}
 \usage{
-run_stan_model(model, path, n_sp, ts, ...)
+run_stan_model(model, path, n_sp, ts)
 }
 \arguments{
-\item{model}{one of c("BV")}
+\item{model}{one of c("BV", "GL")}
 
 \item{...}{tuning parameters for Stan sampler}
 }
