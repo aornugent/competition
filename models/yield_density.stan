@@ -8,7 +8,7 @@ data {
   vector<lower=0>[N] y;             // observations
   int<lower=1> n_l[N];              // competitors per pot
   int<lower=1, upper=JK> jk[N];     // species x fertility index
-  int<lower=1, upper=JKL> jkl[N_jk];// species x competitor x fertilty index
+  int<lower=1, upper=JKL> jkl[N_jk];// species x fertility x competitor index
 
   int<lower=1, upper=B> b[N];       // block index
 }
