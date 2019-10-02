@@ -154,7 +154,7 @@ neg_ll <- function(b, y, x, tobit) {
 }
 
 # Bivariate JSDM using MLE.
-est <- function(mixt, tobit = F) {
+est <- function(mixt, tobit = T) {
 
     # set sensible starting values
   m1 <- lm(N1 ~ fert, data = mixt)
